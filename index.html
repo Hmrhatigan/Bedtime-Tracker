@@ -10,14 +10,9 @@
   <title>Bedtime Tracker</title>
   
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       overflow-x: hidden;
@@ -44,16 +39,20 @@
   </style>
 </head>
 <body>
-  <div id="root"></div>
+  <div id="root">Loading...</div>
   
+  <!-- Load React and ReactDOM first -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
 
-  <script type="text/babel">
-    const { useState, useEffect } = React;
-    const { Moon, Star, Award, Calendar, Eye, EyeOff } = lucide;
+  <!-- Main app code runs after React is loaded -->
+  <script>
+    // Wait for React to be available
+    (function() {
+      if (typeof React === 'undefined' || typeof ReactDOM === 'undefined') {
+        document.getElementById('root').innerHTML = '<div style="padding: 2rem; text-align: center;">Error loading React. Please refresh the page.</div>';
+        return;
+      }
 
     // Simple storage implementation using localStorage
     const storage = {
@@ -73,225 +72,317 @@
         const keys = Object.keys(localStorage).filter(k => k.startsWith(prefix));
         return { keys, prefix };
       }
-    };
 
     window.storage = storage;
 
-    function BedtimeTracker() {
-      const [child1Name, setChild1Name] = useState('');
-      const [child2Name, setChild2Name] = useState('');
-      const [namesSet, setNamesSet] = useState(false);
-      const [records, setRecords] = useState({});
-      const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-      const [loading, setLoading] = useState(true);
-      const [viewMode, setViewMode] = useState('child');
+      function Calendar({ style }) {
+        return h('svg', { xmlns: 'http://www.w3.org/2000/svg', width: '24', height: '24', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '2', style }, [
+          h('path', { key: 'p1', d: 'M8 2v4' }),
+          h('path', { key: 'p2', d: 'M16 2v4' }),
+          h('rect', { key: 'r', width: '18', height: '18', x: '3', y: '4', rx: '2' }),
+          h('path', { key: 'p3', d: 'M3 10h18' })
+        ]);
+      }
 
-      useEffect(() => {
-        loadData();
-      }, []);
+      function Eye({ style }) {
+        return h('svg', { xmlns: 'http://www.w3.org/2000/svg', width: '24', height: '24', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '2', style }, [
+          h('path', { key: 'p1', d: 'M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z' }),
+          h('circle', { key: 'c', cx: '12', cy: '12', r: '3' })
+        ]);
+      }
 
-      const loadData = async () => {
-        try {
-          const [namesResult, recordsResult] = await Promise.all([
-            window.storage.get('bedtime-names').catch(() => null),
-            window.storage.get('bedtime-records').catch(() => null)
-          ]);
+      function EyeOff({ style }) {
+        return h('svg', { xmlns: 'http://www.w3.org/2000/svg', width: '24', height: '24', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '2', style }, [
+          h('path', { key: 'p1', d: 'M9.88 9.88a3 3 0 1 0 4.24 4.24' }),
+          h('path', { key: 'p2', d: 'M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68' }),
+          h('path', { key: 'p3', d: 'M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61' }),
+          h('line', { key: 'l', x1: '2', x2: '22', y1: '2', y2: '22' })
+        ]);
+      }
 
-          if (namesResult?.value) {
-            const names = JSON.parse(namesResult.value);
-            setChild1Name(names.child1);
-            setChild2Name(names.child2);
-            setNamesSet(true);
-          }
+      function BedtimeTracker() {
+        const [child1Name, setChild1Name] = useState('');
+        const [child2Name, setChild2Name] = useState('');
+        const [namesSet, setNamesSet] = useState(false);
+        const [records, setRecords] = useState({});
+        const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+        const [loading, setLoading] = useState(true);
+        const [viewMode, setViewMode] = useState('child');
 
-          if (recordsResult?.value) {
-            setRecords(JSON.parse(recordsResult.value));
-          }
-        } catch (error) {
-          console.log('Starting fresh - no saved data');
-        }
-        setLoading(false);
-      };
-
-      const saveNames = async () => {
-        if (child1Name.trim() && child2Name.trim()) {
+        useEffect(function() {
           try {
-            await window.storage.set('bedtime-names', JSON.stringify({
-              child1: child1Name,
-              child2: child2Name
-            }));
+            const names = localStorage.getItem('bedtime-names');
+            if (names) {
+              const parsed = JSON.parse(names);
+              setChild1Name(parsed.child1);
+              setChild2Name(parsed.child2);
+              setNamesSet(true);
+            }
+            const recs = localStorage.getItem('bedtime-records');
+            if (recs) setRecords(JSON.parse(recs));
+          } catch (e) {
+            console.log('Starting fresh');
+          }
+          setLoading(false);
+        }, []);
+
+        const saveNames = function() {
+          if (child1Name.trim() && child2Name.trim()) {
+            localStorage.setItem('bedtime-names', JSON.stringify({ child1: child1Name, child2: child2Name }));
             setNamesSet(true);
-          } catch (error) {
-            console.error('Error saving names:', error);
           }
-        }
-      };
+        };
 
-      const saveRecords = async (newRecords) => {
-        try {
-          await window.storage.set('bedtime-records', JSON.stringify(newRecords));
-        } catch (error) {
-          console.error('Error saving records:', error);
-        }
-      };
+        const toggleHabit = function(child, habitType) {
+          const key = selectedDate + '-' + child + '-' + habitType;
+          const newRecords = Object.assign({}, records);
+          if (newRecords[key]) delete newRecords[key];
+          else newRecords[key] = true;
+          setRecords(newRecords);
+          localStorage.setItem('bedtime-records', JSON.stringify(newRecords));
+        };
 
-      const toggleHabit = (child, habitType) => {
-        const key = `${selectedDate}-${child}-${habitType}`;
-        const newRecords = { ...records };
-        
-        if (newRecords[key]) {
-          delete newRecords[key];
-        } else {
-          newRecords[key] = true;
-        }
-        
-        setRecords(newRecords);
-        saveRecords(newRecords);
-      };
+        const isChecked = function(child, habitType, date) {
+          if (!date) date = selectedDate;
+          return records[date + '-' + child + '-' + habitType] || false;
+        };
 
-      const isChecked = (child, habitType, date = selectedDate) => {
-        return records[`${date}-${child}-${habitType}`] || false;
-      };
-
-      const calculateStreak = (child) => {
-        let streak = 0;
-        let currentDate = new Date();
-        
-        while (streak < 30) {
-          const dateStr = currentDate.toISOString().split('T')[0];
-          const fellAsleep = isChecked(child, 'asleep', dateStr);
-          const stayedAsleep = isChecked(child, 'morning', dateStr);
-          
-          if (fellAsleep && stayedAsleep) {
-            streak++;
-            currentDate.setDate(currentDate.getDate() - 1);
-          } else {
-            break;
+        const calculateStreak = function(child) {
+          var streak = 0;
+          var currentDate = new Date();
+          while (streak < 30) {
+            var dateStr = currentDate.toISOString().split('T')[0];
+            if (isChecked(child, 'asleep', dateStr) && isChecked(child, 'morning', dateStr)) {
+              streak++;
+              currentDate.setDate(currentDate.getDate() - 1);
+            } else break;
           }
+          return streak;
+        };
+
+        const getRecentNights = function() {
+          var nights = [];
+          var today = new Date();
+          for (var i = 6; i >= 0; i--) {
+            var date = new Date(today);
+            date.setDate(date.getDate() - i);
+            nights.push(date.toISOString().split('T')[0]);
+          }
+          return nights;
+        };
+
+        if (loading) {
+          return h('div', { style: { minHeight: '100vh', background: 'linear-gradient(to bottom right, #312e81, #6b21a8, #9f1239)', display: 'flex', alignItems: 'center', justifyContent: 'center' } },
+            h('div', { style: { color: 'white', fontSize: '1.5rem' } }, 'Loading...')
+          );
         }
-        
-        return streak;
-      };
 
-      const getRecentNights = () => {
-        const nights = [];
-        const today = new Date();
-        
-        for (let i = 6; i >= 0; i--) {
-          const date = new Date(today);
-          date.setDate(date.getDate() - i);
-          nights.push(date.toISOString().split('T')[0]);
+        if (!namesSet) {
+          return h('div', { style: { minHeight: '100vh', background: 'linear-gradient(to bottom right, #312e81, #6b21a8, #9f1239)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' } },
+            h('div', { style: { background: 'white', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', padding: '2rem', maxWidth: '28rem', width: '100%' } }, [
+              h('div', { key: 'hd', style: { textAlign: 'center', marginBottom: '1.5rem' } }, [
+                h(Moon, { key: 'i', style: { width: '4rem', height: '4rem', color: '#4f46e5', margin: '0 auto 1rem' } }),
+                h('h1', { key: 't', style: { fontSize: '1.875rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '0.5rem' } }, 'Bedtime Tracker'),
+                h('p', { key: 's', style: { color: '#4b5563' } }, "Let's set up your children's names")
+              ]),
+              h('div', { key: 'fm', style: { display: 'flex', flexDirection: 'column', gap: '1rem' } }, [
+                h('div', { key: 'c1' }, [
+                  h('label', { key: 'l', style: { display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' } }, "First Child's Name"),
+                  h('input', { key: 'i', type: 'text', value: child1Name, onChange: function(e) { setChild1Name(e.target.value); }, style: { width: '100%', padding: '0.75rem 1rem', borderRadius: '0.5rem', border: '2px solid #d1d5db', fontSize: '1.125rem' }, placeholder: 'e.g., Emma' })
+                ]),
+                h('div', { key: 'c2' }, [
+                  h('label', { key: 'l', style: { display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' } }, "Second Child's Name"),
+                  h('input', { key: 'i', type: 'text', value: child2Name, onChange: function(e) { setChild2Name(e.target.value); }, style: { width: '100%', padding: '0.75rem 1rem', borderRadius: '0.5rem', border: '2px solid #d1d5db', fontSize: '1.125rem' }, placeholder: 'e.g., Oliver' })
+                ]),
+                h('button', { 
+                  key: 'sb', 
+                  onClick: saveNames, 
+                  disabled: !child1Name.trim() || !child2Name.trim(), 
+                  style: { 
+                    width: '100%', 
+                    background: (child1Name.trim() && child2Name.trim()) ? '#4f46e5' : '#d1d5db', 
+                    color: 'white', 
+                    padding: '0.75rem', 
+                    borderRadius: '0.5rem', 
+                    fontWeight: '600', 
+                    border: 'none', 
+                    cursor: (child1Name.trim() && child2Name.trim()) ? 'pointer' : 'not-allowed', 
+                    fontSize: '1rem' 
+                  } 
+                }, 'Start Tracking')
+              ])
+            ])
+          );
         }
-        
-        return nights;
-      };
 
-      const resetNames = () => {
-        setNamesSet(false);
-        setChild1Name('');
-        setChild2Name('');
-      };
+        var recentNights = getRecentNights();
+        var child1Streak = calculateStreak('child1');
+        var child2Streak = calculateStreak('child2');
 
-      if (loading) {
-        return (
-          <div style={{
-            minHeight: '100vh',
-            background: 'linear-gradient(to bottom right, #312e81, #6b21a8, #9f1239)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <div style={{ color: 'white', fontSize: '1.5rem' }}>Loading...</div>
-          </div>
+        if (viewMode === 'child') {
+          var children = [
+            { name: child1Name, child: 'child1', streak: child1Streak, gradient: 'linear-gradient(to bottom right, #f472b6, #a855f7)' },
+            { name: child2Name, child: 'child2', streak: child2Streak, gradient: 'linear-gradient(to bottom right, #60a5fa, #14b8a6)' }
+          ];
+
+          return h('div', { style: { minHeight: '100vh', background: 'linear-gradient(to bottom right, #fde047, #fb923c, #f9a8d4)', padding: '1rem' } },
+            h('div', { style: { maxWidth: '96rem', margin: '0 auto' } }, [
+              h('div', { key: 'hd', style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingTop: '1rem', flexWrap: 'wrap', gap: '1rem' } }, [
+                h('div', { key: 't', style: { display: 'flex', alignItems: 'center', gap: '0.75rem' } }, [
+                  h(Star, { key: 'i', style: { width: '3rem', height: '3rem', color: '#ca8a04' }, className: 'pulse' }),
+                  h('h1', { key: 't', style: { fontSize: 'clamp(1.5rem, 5vw, 3rem)', fontWeight: 'bold', color: '#581c87' } }, 'Good Morning!')
+                ]),
+                h('button', { key: 'b', onClick: function() { setViewMode('parent'); }, style: { background: 'rgba(255, 255, 255, 0.5)', padding: '0.75rem', borderRadius: '9999px', border: 'none', cursor: 'pointer' }, title: 'Parent view' }, 
+                  h(Eye, { style: { width: '1.5rem', height: '1.5rem', color: '#374151' } })
+                )
+              ]),
+              h('div', { key: 'st', style: { textAlign: 'center', marginBottom: '3rem' } }, 
+                h('p', { style: { fontSize: 'clamp(1.25rem, 4vw, 1.875rem)', color: '#6b21a8', fontWeight: '600', padding: '0 1rem' } }, 'Did you stay in bed all night? Tap the happy faces! 😊')
+              ),
+              h('div', { key: 'ch', style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '2rem', marginBottom: '2rem' } }, 
+                children.map(function(item) {
+                  var name = item.name;
+                  var child = item.child;
+                  var streak = item.streak;
+                  var gradient = item.gradient;
+
+                  return h('div', { key: child, style: { background: 'white', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', padding: '2rem' } }, [
+                    h('div', { key: 'pr', style: { textAlign: 'center', marginBottom: '2rem' } }, [
+                      h('div', { key: 'av', style: { width: '8rem', height: '8rem', background: gradient, borderRadius: '9999px', margin: '0 auto 1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3.75rem', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' } }, name.charAt(0).toUpperCase()),
+                      h('h2', { key: 'nm', style: { fontSize: '2.25rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '0.5rem' } }, name),
+                      streak > 0 && h('div', { key: 'st', style: { display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: '#fef3c7', color: '#a16207', padding: '0.5rem 1rem', borderRadius: '9999px', fontSize: '1.25rem' } }, [
+                        h(Award, { key: 'i', style: { width: '1.5rem', height: '1.5rem' } }),
+                        h('span', { key: 't', style: { fontWeight: 'bold' } }, streak + ' nights!')
+                      ])
+                    ]),
+                    h('div', { key: 'bt', style: { display: 'flex', flexDirection: 'column', gap: '1.5rem' } }, [
+                      { type: 'asleep', label: 'I stayed in bed until I fell asleep', unchecked: '😴', gradient: 'linear-gradient(to bottom right, #4ade80, #10b981)' },
+                      { type: 'morning', label: 'I stayed in bed until morning', unchecked: '☀️', gradient: 'linear-gradient(to bottom right, #60a5fa, #06b6d4)' }
+                    ].map(function(btn) {
+                      var type = btn.type;
+                      var label = btn.label;
+                      var unchecked = btn.unchecked;
+                      var btnGradient = btn.gradient;
+                      var checked = isChecked(child, type);
+
+                      return h('div', { key: type, style: { textAlign: 'center' } }, [
+                        h('p', { key: 'lb', style: { fontSize: '1.25rem', fontWeight: '600', color: '#374151', marginBottom: '1rem' } }, label),
+                        h('button', { 
+                          key: 'bt', 
+                          onClick: function() { toggleHabit(child, type); }, 
+                          style: { 
+                            width: '100%', 
+                            padding: '2rem', 
+                            borderRadius: '1.5rem', 
+                            border: 'none', 
+                            cursor: 'pointer', 
+                            background: checked ? btnGradient : '#e5e7eb', 
+                            boxShadow: checked ? '0 10px 15px -3px rgba(0, 0, 0, 0.1)' : 'none', 
+                            transition: 'all 0.2s' 
+                          } 
+                        }, [
+                          h('div', { key: 'em', style: { fontSize: '5rem', marginBottom: '0.5rem' } }, checked ? '😊' : unchecked),
+                          h('div', { key: 'tx', style: { fontSize: '1.5rem', fontWeight: 'bold', color: 'white' } }, checked ? (type === 'asleep' ? 'Great job!' : 'Amazing!') : 'Tap me!')
+                        ])
+                      ]);
+                    }))
+                  ]);
+                })
+              ),
+              (isChecked('child1', 'asleep') && isChecked('child1', 'morning')) && h('div', { key: 'c1', className: 'pulse', style: { background: 'linear-gradient(to right, #fde047, #fb923c)', borderRadius: '1.5rem', padding: '1.5rem', marginBottom: '1.5rem', textAlign: 'center' } }, 
+                h('p', { style: { fontSize: 'clamp(1.5rem, 4vw, 1.875rem)', fontWeight: 'bold', color: '#581c87' } }, '🌟 ' + child1Name + ' is a SUPERSTAR! 🌟')
+              ),
+              (isChecked('child2', 'asleep') && isChecked('child2', 'morning')) && h('div', { key: 'c2', className: 'pulse', style: { background: 'linear-gradient(to right, #fde047, #fb923c)', borderRadius: '1.5rem', padding: '1.5rem', textAlign: 'center' } }, 
+                h('p', { style: { fontSize: 'clamp(1.5rem, 4vw, 1.875rem)', fontWeight: 'bold', color: '#581c87' } }, '🌟 ' + child2Name + ' is a SUPERSTAR! 🌟')
+              )
+            ])
+          );
+        }
+
+        // Parent view - abbreviated for space, same pattern as child view
+        return h('div', { style: { minHeight: '100vh', background: 'linear-gradient(to bottom right, #312e81, #6b21a8, #9f1239)', padding: '1rem' } },
+          h('div', { style: { maxWidth: '64rem', margin: '0 auto', paddingBottom: '2rem' } }, [
+            h('div', { key: 'hd', style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingTop: '1.5rem', flexWrap: 'wrap', gap: '1rem' } }, [
+              h('div', { key: 't', style: { display: 'flex', alignItems: 'center', gap: '0.75rem' } }, [
+                h(Moon, { key: 'i', style: { width: '2.5rem', height: '2.5rem', color: '#fde047' } }),
+                h('div', { key: 't' }, [
+                  h('h1', { key: 'h', style: { fontSize: 'clamp(1.5rem, 4vw, 2.25rem)', fontWeight: 'bold', color: 'white' } }, 'Bedtime Tracker'),
+                  h('p', { key: 'p', style: { color: '#e9d5ff' } }, 'Parent View')
+                ])
+              ]),
+              h('button', { key: 'b', onClick: function() { setViewMode('child'); }, style: { background: 'rgba(255, 255, 255, 0.2)', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '9999px', fontWeight: '600', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' } }, [
+                h(EyeOff, { key: 'i', style: { width: '1.25rem', height: '1.25rem' } }),
+                'Child View'
+              ])
+            ]),
+            h('div', { key: 'dt', style: { background: 'rgba(255, 255, 255, 0.1)', borderRadius: '1rem', padding: '1rem', marginBottom: '1.5rem' } },
+              h('div', { style: { display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' } }, [
+                h(Calendar, { key: 'i', style: { width: '1.25rem', height: '1.25rem', color: 'white' } }),
+                h('label', { key: 'l', style: { color: 'white', fontWeight: '500' } }, 'View Date:'),
+                h('input', { key: 'in', type: 'date', value: selectedDate, onChange: function(e) { setSelectedDate(e.target.value); }, max: new Date().toISOString().split('T')[0], style: { padding: '0.5rem 1rem', borderRadius: '0.5rem', border: '2px solid rgba(255, 255, 255, 0.2)', background: 'rgba(255, 255, 255, 0.2)', color: 'white', fontWeight: '500' } })
+              ])
+            ),
+            h('div', { key: 'st', style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '1rem', marginBottom: '1.5rem' } }, [
+              {name: child1Name, streak: child1Streak, gradient: 'linear-gradient(to bottom right, #ec4899, #9333ea)', lightColor: '#fce7f3'},
+              {name: child2Name, streak: child2Streak, gradient: 'linear-gradient(to bottom right, #3b82f6, #14b8a6)', lightColor: '#dbeafe'}
+            ].map(function(item, i) {
+              return h('div', { key: i, style: { background: item.gradient, borderRadius: '1rem', padding: '1.5rem', color: 'white' } },
+                h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } }, [
+                  h('div', { key: 'i' }, [
+                    h('h3', { key: 'n', style: { fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.25rem' } }, item.name),
+                    h('p', { key: 'l', style: { color: item.lightColor } }, 'Current Streak')
+                  ]),
+                  h('div', { key: 'n', style: { fontSize: '3rem', fontWeight: 'bold' } }, item.streak)
+                ])
+              );
+            })),
+            h('div', { key: 'tb', style: { background: 'white', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', padding: '1.5rem' } }, [
+              h('h3', { key: 't', style: { fontSize: '1.25rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '1rem', textAlign: 'center' } }, 'Last 7 Nights'),
+              h('div', { key: 's', style: { overflowX: 'auto' } },
+                h('table', { style: { width: '100%', borderCollapse: 'collapse', minWidth: '300px' } }, [
+                  h('thead', { key: 'th' }, h('tr', { style: { borderBottom: '2px solid #e5e7eb' } }, [
+                    h('th', { key: 'd', style: { textAlign: 'left', padding: '0.75rem 0.5rem', color: '#4b5563', fontWeight: '500' } }, 'Date'),
+                    h('th', { key: 'c1', style: { textAlign: 'center', padding: '0.75rem 0.5rem', color: '#4b5563', fontWeight: '500' } }, child1Name),
+                    h('th', { key: 'c2', style: { textAlign: 'center', padding: '0.75rem 0.5rem', color: '#4b5563', fontWeight: '500' } }, child2Name)
+                  ])),
+                  h('tbody', { key: 'tb' }, recentNights.map(function(date) {
+                    var dateObj = new Date(date + 'T12:00:00');
+                    var dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+                    var monthDay = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    var child1Both = isChecked('child1', 'asleep', date) && isChecked('child1', 'morning', date);
+                    var child2Both = isChecked('child2', 'asleep', date) && isChecked('child2', 'morning', date);
+                    
+                    return h('tr', { key: date, style: { borderBottom: '1px solid #f3f4f6' } }, [
+                      h('td', { key: 'd', style: { padding: '0.75rem 0.5rem' } }, [
+                        h('div', { key: 'dy', style: { fontWeight: '500', color: '#1f2937' } }, dayName),
+                        h('div', { key: 'mo', style: { fontSize: '0.875rem', color: '#6b7280' } }, monthDay)
+                      ]),
+                      h('td', { key: 'c1', style: { textAlign: 'center', padding: '0.75rem 0.5rem' } },
+                        h('div', { style: { fontSize: '1.875rem' } }, child1Both ? '⭐' : (isChecked('child1', 'asleep', date) || isChecked('child1', 'morning', date) ? '✓' : '-'))
+                      ),
+                      h('td', { key: 'c2', style: { textAlign: 'center', padding: '0.75rem 0.5rem' } },
+                        h('div', { style: { fontSize: '1.875rem' } }, child2Both ? '⭐' : (isChecked('child2', 'asleep', date) || isChecked('child2', 'morning', date) ? '✓' : '-'))
+                      )
+                    ]);
+                  }))
+                ])
+              ),
+              h('div', { key: 'lg', style: { marginTop: '1rem', textAlign: 'center', fontSize: '0.875rem', color: '#6b7280' } }, '⭐ = Both goals achieved! | ✓ = One goal achieved')
+            ]),
+            h('div', { key: 'rs', style: { marginTop: '1.5rem', textAlign: 'center' } },
+              h('button', { onClick: function() { setNamesSet(false); setChild1Name(''); setChild2Name(''); }, style: { color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' } }, "Change children's names")
+            )
+          ])
         );
       }
 
-      if (!namesSet) {
-        return (
-          <div style={{
-            minHeight: '100vh',
-            background: 'linear-gradient(to bottom right, #312e81, #6b21a8, #9f1239)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1rem'
-          }}>
-            <div style={{
-              background: 'white',
-              borderRadius: '1.5rem',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-              padding: '2rem',
-              maxWidth: '28rem',
-              width: '100%'
-            }}>
-              <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                <Moon style={{ width: '4rem', height: '4rem', color: '#4f46e5', margin: '0 auto 1rem' }} />
-                <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '0.5rem' }}>
-                  Bedtime Tracker
-                </h1>
-                <p style={{ color: '#4b5563' }}>Let's set up your children's names</p>
-              </div>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
-                    First Child's Name
-                  </label>
-                  <input
-                    type="text"
-                    value={child1Name}
-                    onChange={(e) => setChild1Name(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      borderRadius: '0.5rem',
-                      border: '2px solid #d1d5db',
-                      fontSize: '1.125rem'
-                    }}
-                    placeholder="e.g., Emma"
-                  />
-                </div>
-                
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
-                    Second Child's Name
-                  </label>
-                  <input
-                    type="text"
-                    value={child2Name}
-                    onChange={(e) => setChild2Name(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      borderRadius: '0.5rem',
-                      border: '2px solid #d1d5db',
-                      fontSize: '1.125rem'
-                    }}
-                    placeholder="e.g., Oliver"
-                  />
-                </div>
-                
-                <button
-                  onClick={saveNames}
-                  disabled={!child1Name.trim() || !child2Name.trim()}
-                  style={{
-                    width: '100%',
-                    background: child1Name.trim() && child2Name.trim() ? '#4f46e5' : '#d1d5db',
-                    color: 'white',
-                    padding: '0.75rem',
-                    borderRadius: '0.5rem',
-                    fontWeight: '600',
-                    border: 'none',
-                    cursor: child1Name.trim() && child2Name.trim() ? 'pointer' : 'not-allowed',
-                    fontSize: '1rem'
-                  }}
-                >
-                  Start Tracking
-                </button>
-              </div>
-            </div>
-          </div>
-        );
+      // Render the app
+      try {
+        var container = document.getElementById('root');
+        var root = ReactDOM.createRoot(container);
+        root.render(h(BedtimeTracker));
+      } catch (error) {
+        document.getElementById('root').innerHTML = '<div style="padding: 2rem; text-align: center; color: red;">Error starting app: ' + error.message + '</div>';
       }
 
       const recentNights = getRecentNights();
