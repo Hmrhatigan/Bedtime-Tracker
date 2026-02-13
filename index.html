@@ -9,10 +9,6 @@
   <meta name="theme-color" content="#6366f1">
   <title>Bedtime Tracker</title>
   
-  <!-- PWA Icons -->
-  <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAAEsCAYAAAB5fY51AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAASvSURBVHgB7doxAQAgDMCwgX/PwRoIIXR1z8wCIF7fAeAJwwIyjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAsKidmbn+Q8/nCzRqSwAAAABJRU5ErkJggg==">
-  <link rel="manifest" href="#" id="manifest-placeholder">
-  
   <style>
     * {
       margin: 0;
@@ -31,10 +27,18 @@
       min-height: 100vh;
     }
     
-    /* iOS specific styles */
     @supports (-webkit-touch-callout: none) {
       body {
         min-height: -webkit-fill-available;
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: .5;
       }
     }
   </style>
@@ -51,7 +55,7 @@
     const { useState, useEffect } = React;
     const { Moon, Star, Award, Calendar, Eye, EyeOff } = lucide;
 
-    // Simple storage implementation for PWA
+    // Simple storage implementation using localStorage
     const storage = {
       get: async (key) => {
         const value = localStorage.getItem(key);
@@ -71,7 +75,6 @@
       }
     };
 
-    // Make storage available globally
     window.storage = storage;
 
     function BedtimeTracker() {
@@ -303,10 +306,10 @@
             padding: '1rem'
           }}>
             <div style={{ maxWidth: '96rem', margin: '0 auto' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingTop: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingTop: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <Star style={{ width: '3rem', height: '3rem', color: '#ca8a04', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
-                  <h1 style={{ fontSize: '3rem', fontWeight: 'bold', color: '#581c87' }}>Good Morning!</h1>
+                  <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 3rem)', fontWeight: 'bold', color: '#581c87' }}>Good Morning!</h1>
                 </div>
                 <button
                   onClick={() => setViewMode('parent')}
@@ -324,12 +327,12 @@
               </div>
 
               <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-                <p style={{ fontSize: '1.875rem', color: '#6b21a8', fontWeight: '600' }}>
+                <p style={{ fontSize: 'clamp(1.25rem, 4vw, 1.875rem)', color: '#6b21a8', fontWeight: '600', padding: '0 1rem' }}>
                   Did you stay in bed all night? Tap the happy faces! 😊
                 </p>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '2rem', marginBottom: '2rem' }}>
                 {[
                   { name: child1Name, child: 'child1', streak: child1Streak, gradient: 'linear-gradient(to bottom right, #f472b6, #a855f7)' },
                   { name: child2Name, child: 'child2', streak: child2Streak, gradient: 'linear-gradient(to bottom right, #60a5fa, #14b8a6)' }
@@ -387,11 +390,8 @@
                               cursor: 'pointer',
                               background: isChecked(child, type) ? btnGradient : '#e5e7eb',
                               boxShadow: isChecked(child, type) ? '0 10px 15px -3px rgba(0, 0, 0, 0.1)' : 'none',
-                              transform: 'scale(1)',
                               transition: 'all 0.2s'
                             }}
-                            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                           >
                             <div style={{ fontSize: '5rem', marginBottom: '0.5rem' }}>
                               {isChecked(child, type) ? '😊' : unchecked}
@@ -416,7 +416,7 @@
                   textAlign: 'center',
                   animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
                 }}>
-                  <p style={{ fontSize: '1.875rem', fontWeight: 'bold', color: '#581c87' }}>
+                  <p style={{ fontSize: 'clamp(1.5rem, 4vw, 1.875rem)', fontWeight: 'bold', color: '#581c87' }}>
                     🌟 {child1Name} is a SUPERSTAR! 🌟
                   </p>
                 </div>
@@ -430,7 +430,7 @@
                   textAlign: 'center',
                   animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
                 }}>
-                  <p style={{ fontSize: '1.875rem', fontWeight: 'bold', color: '#581c87' }}>
+                  <p style={{ fontSize: 'clamp(1.5rem, 4vw, 1.875rem)', fontWeight: 'bold', color: '#581c87' }}>
                     🌟 {child2Name} is a SUPERSTAR! 🌟
                   </p>
                 </div>
@@ -449,12 +449,12 @@
           paddingBottom: '2rem'
         }}>
           <div style={{ maxWidth: '64rem', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingTop: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingTop: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <Moon style={{ width: '2.5rem', height: '2.5rem', color: '#fde047' }} />
                 <div>
-                  <h1 style={{ fontSize: '2.25rem', fontWeight: 'bold', color: 'white' }}>Bedtime Tracker</h1>
-                  <p style={{ color: '#e9d5ff' }}>Parent View</p>
+                  <h1 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.25rem)', fontWeight: 'bold', color: 'white' }}>Bedtime Tracker</h1>
+                  <p style={{ color: '#e9d5ff', fontSize: 'clamp(0.875rem, 2vw, 1rem)' }}>Parent View</p>
                 </div>
               </div>
               <button
@@ -484,7 +484,7 @@
               padding: '1rem',
               marginBottom: '1.5rem'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                 <Calendar style={{ width: '1.25rem', height: '1.25rem', color: 'white' }} />
                 <label style={{ color: 'white', fontWeight: '500' }}>View Date:</label>
                 <input
@@ -504,7 +504,7 @@
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
               <div style={{
                 background: 'linear-gradient(to bottom right, #ec4899, #9333ea)',
                 borderRadius: '1rem',
@@ -542,7 +542,7 @@
               </h3>
               
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '300px' }}>
                   <thead>
                     <tr style={{ borderBottom: '2px solid #e5e7eb' }}>
                       <th style={{ textAlign: 'left', padding: '0.75rem 0.5rem', color: '#4b5563', fontWeight: '500' }}>Date</th>
@@ -617,46 +617,6 @@
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<BedtimeTracker />);
-  </script>
-
-  <script>
-    // Register service worker for PWA functionality
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
-          .then(reg => console.log('Service Worker registered'))
-          .catch(err => console.log('Service Worker registration failed'));
-      });
-    }
-
-    // Generate manifest dynamically
-    const manifestData = {
-      "name": "Bedtime Tracker",
-      "short_name": "Bedtime",
-      "description": "Track bedtime habits for kids",
-      "start_url": "./",
-      "display": "standalone",
-      "background_color": "#312e81",
-      "theme_color": "#6366f1",
-      "orientation": "portrait",
-      "icons": [
-        {
-          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAAEsCAYAAAB5fY51AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAASvSURBVHgB7doxAQAgDMCwgX/PwRoIIXR1z8wCIF7fAeAJwwIyjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAsKidmbn+Q8/nCzRqSwAAAABJRU5ErkJggg==",
-          "sizes": "192x192",
-          "type": "image/png"
-        },
-        {
-          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAAEsCAYAAAB5fY51AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAASvSURBVHgB7doxAQAgDMCwgX/PwRoIIXR1z8wCIF7fAeAJwwIyjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAMMMChkVBjAsYZljAsKidmbn+Q8/nCzRqSwAAAABJRU5ErkJggg==",
-          "sizes": "512x512",
-          "type": "image/png"
-        }
-      ]
-    };
-
-    const stringManifest = JSON.stringify(manifestData);
-    const blob = new Blob([stringManifest], {type: 'application/json'});
-    const manifestURL = URL.createObjectURL(blob);
-    document.querySelector('#manifest-placeholder').setAttribute('href', manifestURL);
   </script>
 </body>
 </html>
