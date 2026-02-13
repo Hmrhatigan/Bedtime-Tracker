@@ -14,11 +14,28 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
       -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
     }
-    #root { min-height: 100vh; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
-    .pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-    button, input { font-family: inherit; }
+    
+    #root {
+      min-height: 100vh;
+    }
+    
+    @supports (-webkit-touch-callout: none) {
+      body {
+        min-height: -webkit-fill-available;
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: .5;
+      }
+    }
   </style>
 </head>
 <body>
@@ -37,27 +54,26 @@
         return;
       }
 
-      const { useState, useEffect, createElement: h } = React;
-
-      // Simple SVG icons as functions
-      function Moon({ style }) {
-        return h('svg', { xmlns: 'http://www.w3.org/2000/svg', width: '24', height: '24', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '2', style }, 
-          h('path', { d: 'M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z' })
-        );
+    // Simple storage implementation using localStorage
+    const storage = {
+      get: async (key) => {
+        const value = localStorage.getItem(key);
+        return value ? { value, key } : null;
+      },
+      set: async (key, value) => {
+        localStorage.setItem(key, value);
+        return { key, value };
+      },
+      delete: async (key) => {
+        localStorage.removeItem(key);
+        return { key, deleted: true };
+      },
+      list: async (prefix = '') => {
+        const keys = Object.keys(localStorage).filter(k => k.startsWith(prefix));
+        return { keys, prefix };
       }
 
-      function Star({ style, className }) {
-        return h('svg', { xmlns: 'http://www.w3.org/2000/svg', width: '24', height: '24', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '2', style, className }, 
-          h('polygon', { points: '12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2' })
-        );
-      }
-
-      function Award({ style }) {
-        return h('svg', { xmlns: 'http://www.w3.org/2000/svg', width: '24', height: '24', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '2', style }, [
-          h('circle', { key: 'c', cx: '12', cy: '8', r: '6' }),
-          h('path', { key: 'p', d: 'm15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526' })
-        ]);
-      }
+    window.storage = storage;
 
       function Calendar({ style }) {
         return h('svg', { xmlns: 'http://www.w3.org/2000/svg', width: '24', height: '24', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '2', style }, [
@@ -368,7 +384,330 @@
       } catch (error) {
         document.getElementById('root').innerHTML = '<div style="padding: 2rem; text-align: center; color: red;">Error starting app: ' + error.message + '</div>';
       }
-    })();
+
+      const recentNights = getRecentNights();
+      const child1Streak = calculateStreak('child1');
+      const child2Streak = calculateStreak('child2');
+
+      if (viewMode === 'child') {
+        return (
+          <div style={{
+            minHeight: '100vh',
+            background: 'linear-gradient(to bottom right, #fde047, #fb923c, #f9a8d4)',
+            padding: '1rem'
+          }}>
+            <div style={{ maxWidth: '96rem', margin: '0 auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingTop: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <Star style={{ width: '3rem', height: '3rem', color: '#ca8a04', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
+                  <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 3rem)', fontWeight: 'bold', color: '#581c87' }}>Good Morning!</h1>
+                </div>
+                <button
+                  onClick={() => setViewMode('parent')}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.5)',
+                    padding: '0.75rem',
+                    borderRadius: '9999px',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                  title="Parent view"
+                >
+                  <Eye style={{ width: '1.5rem', height: '1.5rem', color: '#374151' }} />
+                </button>
+              </div>
+
+              <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+                <p style={{ fontSize: 'clamp(1.25rem, 4vw, 1.875rem)', color: '#6b21a8', fontWeight: '600', padding: '0 1rem' }}>
+                  Did you stay in bed all night? Tap the happy faces! 😊
+                </p>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '2rem', marginBottom: '2rem' }}>
+                {[
+                  { name: child1Name, child: 'child1', streak: child1Streak, gradient: 'linear-gradient(to bottom right, #f472b6, #a855f7)' },
+                  { name: child2Name, child: 'child2', streak: child2Streak, gradient: 'linear-gradient(to bottom right, #60a5fa, #14b8a6)' }
+                ].map(({ name, child, streak, gradient }) => (
+                  <div key={child} style={{ background: 'white', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', padding: '2rem' }}>
+                    <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                      <div style={{
+                        width: '8rem',
+                        height: '8rem',
+                        background: gradient,
+                        borderRadius: '9999px',
+                        margin: '0 auto 1rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '3.75rem',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                      }}>
+                        {name.charAt(0).toUpperCase()}
+                      </div>
+                      <h2 style={{ fontSize: '2.25rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '0.5rem' }}>{name}</h2>
+                      {streak > 0 && (
+                        <div style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          background: '#fef3c7',
+                          color: '#a16207',
+                          padding: '0.5rem 1rem',
+                          borderRadius: '9999px',
+                          fontSize: '1.25rem'
+                        }}>
+                          <Award style={{ width: '1.5rem', height: '1.5rem' }} />
+                          <span style={{ fontWeight: 'bold' }}>{streak} nights!</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                      {[
+                        { type: 'asleep', label: 'I stayed in bed until I fell asleep', unchecked: '😴', gradient: 'linear-gradient(to bottom right, #4ade80, #10b981)' },
+                        { type: 'morning', label: 'I stayed in bed until morning', unchecked: '☀️', gradient: 'linear-gradient(to bottom right, #60a5fa, #06b6d4)' }
+                      ].map(({ type, label, unchecked, gradient: btnGradient }) => (
+                        <div key={type} style={{ textAlign: 'center' }}>
+                          <p style={{ fontSize: '1.25rem', fontWeight: '600', color: '#374151', marginBottom: '1rem' }}>
+                            {label}
+                          </p>
+                          <button
+                            onClick={() => toggleHabit(child, type)}
+                            style={{
+                              width: '100%',
+                              padding: '2rem',
+                              borderRadius: '1.5rem',
+                              border: 'none',
+                              cursor: 'pointer',
+                              background: isChecked(child, type) ? btnGradient : '#e5e7eb',
+                              boxShadow: isChecked(child, type) ? '0 10px 15px -3px rgba(0, 0, 0, 0.1)' : 'none',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            <div style={{ fontSize: '5rem', marginBottom: '0.5rem' }}>
+                              {isChecked(child, type) ? '😊' : unchecked}
+                            </div>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white' }}>
+                              {isChecked(child, type) ? (type === 'asleep' ? 'Great job!' : 'Amazing!') : 'Tap me!'}
+                            </div>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {(isChecked('child1', 'asleep') && isChecked('child1', 'morning')) && (
+                <div style={{
+                  background: 'linear-gradient(to right, #fde047, #fb923c)',
+                  borderRadius: '1.5rem',
+                  padding: '1.5rem',
+                  marginBottom: '1.5rem',
+                  textAlign: 'center',
+                  animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                }}>
+                  <p style={{ fontSize: 'clamp(1.5rem, 4vw, 1.875rem)', fontWeight: 'bold', color: '#581c87' }}>
+                    🌟 {child1Name} is a SUPERSTAR! 🌟
+                  </p>
+                </div>
+              )}
+              
+              {(isChecked('child2', 'asleep') && isChecked('child2', 'morning')) && (
+                <div style={{
+                  background: 'linear-gradient(to right, #fde047, #fb923c)',
+                  borderRadius: '1.5rem',
+                  padding: '1.5rem',
+                  textAlign: 'center',
+                  animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                }}>
+                  <p style={{ fontSize: 'clamp(1.5rem, 4vw, 1.875rem)', fontWeight: 'bold', color: '#581c87' }}>
+                    🌟 {child2Name} is a SUPERSTAR! 🌟
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      // Parent view
+      return (
+        <div style={{
+          minHeight: '100vh',
+          background: 'linear-gradient(to bottom right, #312e81, #6b21a8, #9f1239)',
+          padding: '1rem',
+          paddingBottom: '2rem'
+        }}>
+          <div style={{ maxWidth: '64rem', margin: '0 auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingTop: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <Moon style={{ width: '2.5rem', height: '2.5rem', color: '#fde047' }} />
+                <div>
+                  <h1 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.25rem)', fontWeight: 'bold', color: 'white' }}>Bedtime Tracker</h1>
+                  <p style={{ color: '#e9d5ff', fontSize: 'clamp(0.875rem, 2vw, 1rem)' }}>Parent View</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setViewMode('child')}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  color: 'white',
+                  padding: '0.75rem 1.5rem',
+                  borderRadius: '9999px',
+                  fontWeight: '600',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}
+              >
+                <EyeOff style={{ width: '1.25rem', height: '1.25rem' }} />
+                Child View
+              </button>
+            </div>
+
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: '1rem',
+              padding: '1rem',
+              marginBottom: '1.5rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <Calendar style={{ width: '1.25rem', height: '1.25rem', color: 'white' }} />
+                <label style={{ color: 'white', fontWeight: '500' }}>View Date:</label>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  max={new Date().toISOString().split('T')[0]}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    borderRadius: '0.5rem',
+                    border: '2px solid rgba(255, 255, 255, 0.2)',
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    color: 'white',
+                    fontWeight: '500'
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div style={{
+                background: 'linear-gradient(to bottom right, #ec4899, #9333ea)',
+                borderRadius: '1rem',
+                padding: '1.5rem',
+                color: 'white'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>{child1Name}</h3>
+                    <p style={{ color: '#fce7f3' }}>Current Streak</p>
+                  </div>
+                  <div style={{ fontSize: '3rem', fontWeight: 'bold' }}>{child1Streak}</div>
+                </div>
+              </div>
+              
+              <div style={{
+                background: 'linear-gradient(to bottom right, #3b82f6, #14b8a6)',
+                borderRadius: '1rem',
+                padding: '1.5rem',
+                color: 'white'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>{child2Name}</h3>
+                    <p style={{ color: '#dbeafe' }}>Current Streak</p>
+                  </div>
+                  <div style={{ fontSize: '3rem', fontWeight: 'bold' }}>{child2Streak}</div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ background: 'white', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', padding: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '1rem', textAlign: 'center' }}>
+                Last 7 Nights
+              </h3>
+              
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '300px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid #e5e7eb' }}>
+                      <th style={{ textAlign: 'left', padding: '0.75rem 0.5rem', color: '#4b5563', fontWeight: '500' }}>Date</th>
+                      <th style={{ textAlign: 'center', padding: '0.75rem 0.5rem', color: '#4b5563', fontWeight: '500' }}>{child1Name}</th>
+                      <th style={{ textAlign: 'center', padding: '0.75rem 0.5rem', color: '#4b5563', fontWeight: '500' }}>{child2Name}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentNights.map((date) => {
+                      const dateObj = new Date(date + 'T12:00:00');
+                      const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+                      const monthDay = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                      
+                      const child1Both = isChecked('child1', 'asleep', date) && isChecked('child1', 'morning', date);
+                      const child2Both = isChecked('child2', 'asleep', date) && isChecked('child2', 'morning', date);
+                      
+                      return (
+                        <tr key={date} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                          <td style={{ padding: '0.75rem 0.5rem' }}>
+                            <div style={{ fontWeight: '500', color: '#1f2937' }}>{dayName}</div>
+                            <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>{monthDay}</div>
+                          </td>
+                          <td style={{ textAlign: 'center', padding: '0.75rem 0.5rem' }}>
+                            {child1Both ? (
+                              <div style={{ fontSize: '1.875rem' }}>⭐</div>
+                            ) : isChecked('child1', 'asleep', date) || isChecked('child1', 'morning', date) ? (
+                              <div style={{ fontSize: '1.875rem' }}>✓</div>
+                            ) : (
+                              <div style={{ fontSize: '1.5rem', color: '#d1d5db' }}>-</div>
+                            )}
+                          </td>
+                          <td style={{ textAlign: 'center', padding: '0.75rem 0.5rem' }}>
+                            {child2Both ? (
+                              <div style={{ fontSize: '1.875rem' }}>⭐</div>
+                            ) : isChecked('child2', 'asleep', date) || isChecked('child2', 'morning', date) ? (
+                              <div style={{ fontSize: '1.875rem' }}>✓</div>
+                            ) : (
+                              <div style={{ fontSize: '1.5rem', color: '#d1d5db' }}>-</div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              
+              <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.875rem', color: '#6b7280' }}>
+                ⭐ = Both goals achieved! | ✓ = One goal achieved
+              </div>
+            </div>
+
+            <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+              <button
+                onClick={resetNames}
+                style={{
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  fontSize: '0.875rem',
+                  textDecoration: 'underline',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                Change children's names
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<BedtimeTracker />);
   </script>
 </body>
 </html>
